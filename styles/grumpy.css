@@ -1,0 +1,138 @@
+/* #outertable { */
+/*     width: 90%; */
+/*     /\* margin: auto; *\/ */
+/*     margin-left: 50px; */
+/*     margin-right: 50px; */
+/* } */
+
+/* /\* .JCLRgrips { *\/ */
+/* /\*     width: 100% !important; *\/ */
+/* /\*     margin: 0 !important; *\/ */
+/* /\* } *\/ */
+
+/* #maintdleft { */
+/*     width: 100%; */
+/* } */
+
+/* #maintdright { */
+/*     width: 100%; */
+/* } */
+
+#editor {
+    position: relative !important;
+    /* position: absolute; */
+    /* margin: auto; */
+    top: 0;
+    border: 1px solid lightgray;
+    margin-top: 0px;
+    height: 420px;
+    width: 545px;
+    /* width: 100%; */
+    /* height: 100%; */
+    z-index: 1;
+    margin-bottom: 0px;
+    padding-bottom: 0px;
+    border-bottom: groove;
+}
+
+#tabs {
+    width: 100%;
+}
+
+#output {
+    position: relative !important;
+    /* position: absolute; */
+    top: 0;
+    border: 1px solid lightgray;
+    /* height: 100%; */
+    /* width: 100%; */
+    width: 545px;
+}
+
+.fullwidth {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+h2 {
+    text-align: center;
+}
+
+.ui-state-active {
+    background: #606060 !important;
+    border-color: #909090 !important;
+    /*background: #909090 !important;*/
+}
+
+#content {
+    width: 100%;
+    text-align: left;
+    margin: auto;
+}
+
+#undereditor {
+    margin-top: 3px;
+    margin-left: 4px;
+}
+
+#feedback {
+    margin: auto;
+    margin-top: 10px;
+    font-size: 12px;
+    display: inline;
+    width: 100%;
+}
+
+.myButton {
+    position: relative;
+    z-index: 3;
+}
+
+.plusminusbutton {
+    width: 20px;
+    margin-left: 1px;
+    margin-right: 1px;
+}
+
+.nomarginpadding {
+    margin: 0px;
+    padding: 0px;
+}
+
+table {
+    border: ridge;
+    border-width: 1px;
+}
+
+td {
+    vertical-align: top;
+    border: groove;
+    border-width: 1px;
+}
+
+footer {
+    margin-top: 10px;
+    bottom: 0px;
+    text-align: center;
+}
+
+.noborder {
+    border: none !important;
+}
+
+.tokenMarker {
+    position: absolute;
+    background: rgba(100,200,100,0.5);
+    z-index: 20
+}
+
+#outputtab {
+    padding-left: 0px;
+    position: relative;
+}
+
+#tokenstab, #asttab {
+    padding-left: 5px;
+    padding-top: 0px;
+}
