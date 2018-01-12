@@ -718,7 +718,7 @@ function sexp(source, opts) {
 
     function parseAtom() {
         var start = ix++;
-        while (ATOM.test(source[ix]))
+        while (ix < len && ATOM.test(source[ix]))
             ix++;
         var atom = source.substring(start, ix);
         if (NUMBER.test(atom)) {
@@ -775,6 +775,7 @@ function sexp(source, opts) {
 }
 
 module.exports = sexp;
+
 },{}],4:[function(require,module,exports){
 exports = module.exports = Victor;
 
