@@ -235,6 +235,8 @@ AstRenderer.prototype.constructor = AstRenderer;
 //     this._highlightEnabled = e;
 // }
 
+AstRenderer.prototype.setFps = function(fps) { this._puddi.setFps(fps); };
+
 AstRenderer.prototype.run = function() { this._puddi.resume(); };
 
 AstRenderer.prototype.pause = function() { this._puddi.stop(); };
@@ -274,7 +276,7 @@ AstRenderer.prototype.initScale = function() {
 	console.log("treeWidth: " + treeWidth);
 	console.log("treeHeight: " + treeHeight);
 
-	let x_ratio = this._canvas.width / treeWidth;
+	let x_ratio = this._canvas.width / treeWidth * 0.98;
 	let y_ratio = this._canvas.height / treeHeight;
 
 	if (x_ratio < y_ratio) {
@@ -432,6 +434,7 @@ function createWorker() {
     return worker;
 }
 
+// parse sexp and load tree
 function parse() {
     let editor = ace.edit("editor");
     var txt = editor.getValue();
@@ -515,12 +518,14 @@ function getMousePos(canvas, evt) {
     };
 }
 
+var scrollSpeed = 20;
+
 function scrollLeft(evt) {
     if (activeRenderer) {
 	if (evt) {
 	    evt.preventDefault();
 	}
-	activeRenderer.translate(new Vector(10, 0));
+	activeRenderer.translate(new Vector(scrollSpeed, 0));
     }
 }
 
@@ -529,7 +534,7 @@ function scrollUp(evt) {
 	if (evt) {
 	    evt.preventDefault();
 	}
-	activeRenderer.translate(new Vector(0, 10));
+	activeRenderer.translate(new Vector(0, scrollSpeed));
     }
 }
 
@@ -538,7 +543,7 @@ function scrollRight(evt) {
 	if (evt) {
 	    evt.preventDefault();
 	}
-	activeRenderer.translate(new Vector(-10, 0));
+	activeRenderer.translate(new Vector(-scrollSpeed, 0));
     }
 }
 
@@ -547,7 +552,7 @@ function scrollDown(evt) {
 	if (evt) {
 	    evt.preventDefault();
 	}
-	activeRenderer.translate(new Vector(0, -10));
+	activeRenderer.translate(new Vector(0, -scrollSpeed));
     }
 }
 
@@ -568,6 +573,7 @@ function init() {
     editor.session.setMode("ace/mode/javascript");
     editor.session.setUseWorker(false);
     editor.setOption("showPrintMargin", false)
+    editor.setOption("wrap", true)
 
     editor.on('change', function() {
 	// Parse sexp and load tree
@@ -599,6 +605,9 @@ function init() {
     // set up ast renderer
     let astCanvas = document.getElementById("astcanvas");
     astRenderer = new AstRenderer(astCanvas, editor);
+    // We can reduce CPU usage a bit by limiting the FPS but it
+    // becomes flickery when moving the tree around.. not sure why.
+    // astRenderer.setFps(20);
 
     astCanvas.addEventListener('mousemove', function(evt) {
 	let pos = getMousePos(astCanvas, evt);
@@ -2108,7 +2117,7 @@ function degrees2radian (deg) {
 
 var Vector = require('victor');
 
-var Puddi = function(canvas) {
+var Puddi = function(canvas, fps) {
     this._ctx = canvas.getContext('2d');
     this._objects = [];
     this._scale = 1.0;
@@ -2120,20 +2129,16 @@ var Puddi = function(canvas) {
 	translate: new Vector(0.0, 0.0),
 	time: 0,
 	stopCycle: 0,
-	centered: false // scaling mode
+	centered: false, // scaling mode
+	fps: fps,
+	time_elapsed: 0
     }
 };
 
-function update(tFrame, state) {
-    // compute the time elapsed since the last update
-    let time_elapsed = tFrame - state.time;
-
-    // update the timestamp
-    state.time = tFrame;
-
+function update(state) {
     // update all objects
     for (let o of state.objects) {
-	o.update(time_elapsed);
+	o.update(state.time_elapsed);
     }
 };
 
@@ -2190,14 +2195,25 @@ Puddi.prototype.run = function() {
 	// re-register for the next frame
 	state.stopCycle = window.requestAnimationFrame(cycle);
 
+	state.time_elapsed += tFrame - state.time;
+	state.time = tFrame;
+
+	// do nothing if not enough time has elapsed.
+	if (state.fps && state.time_elapsed < (1000.0 / state.fps)) {
+	    return;
+	}
+
 	// update
-	if (update(tFrame, state) < 0) {
+	if (update(state) < 0) {
 	    stop();
 	    return;
 	}
 
 	// draw
 	draw(ctx, state);
+
+	// reset time_elapsed
+	state.time_elapsed = 0;
     };
 
     // register the cycle function with the browser update loop
@@ -2229,6 +2245,8 @@ Puddi.prototype.removeObject = function(o) {
 };
 
 Puddi.prototype.getCtx = function() { return this._ctx; };
+
+Puddi.prototype.setFps = function(fps) { this._state.fps = fps; };
 
 Puddi.prototype.refresh = function() {
     this._state.canvas.width += 0; //  reset canvas transform
