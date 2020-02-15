@@ -2495,22 +2495,11 @@ TreeNode.prototype.setHidden = function(h) {
     }
 }
 
-// TreeNode.prototype.hide = function() {
-//     this._hidden = true;
-//     this._children.forEach(c => c.hide());
-// }
-
-// TreeNode.prototype.unhide = function() {
-//     this._hidden = false;
-//     if (!this._collapsed) {
-// 	this._children.forEach(c => c.unhide());
-//     }
-// }
-
-// recursively check tree if a point is inside a node
-// and return that node
+// Check if a point is contained within a node of the tree, returning
+// the containing node if found.
 TreeNode.prototype.containsPos = function(p) {
-    if (p.x >= this._position.x &&
+    if (!this._hidden &&
+	p.x >= this._position.x &&
 	p.x <= this._position.x + this._width &&
 	p.y >= this._position.y - this._height / 2 &&
 	p.y <= this._position.y + this._height / 2) {
