@@ -90,6 +90,8 @@ AstRenderer.prototype.optimize = function() {
     // console.log('hello');
     // console.log('lefts: ' + this._ast._lefts());
     // console.log('rights: ' + this._ast._rights());
+    // TODO: figure out why we need to squeeze twice
+    this._ast.squeeze();
     this._ast.squeeze();
 }
 
@@ -160,6 +162,8 @@ AstRenderer.prototype.mouseclick = function(pos) {
     console.log('node: ' + node);
     if (node) {
 	node.toggleCollapsed();
+	// TODO: figure out why we need to squeeze twice
+	this._ast.squeeze();
 	this._ast.squeeze();
     }
 }

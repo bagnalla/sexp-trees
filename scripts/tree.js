@@ -79,6 +79,9 @@ TreeNode.prototype._childrenTreeWidth = function() {
 // space of the tree rooted at this node. Assumes the tree widths of
 // children have been computed already (should always be the case).
 TreeNode.prototype._computeTreeWidth = function() {
+    // for (let c of this._children) {
+    // 	c._computeTreeWidth();
+    // }
     this._treeWidth = Math.max(this._width, this._childrenTreeWidth());
 }
 
@@ -158,39 +161,63 @@ TreeNode.prototype._rights = function() {
     return rs;
 }
 
+// Take maximum over the first axis of a 2d array.
+var max2d = function(m) {
+    let res = [];
+    let n = Math.max.apply(null, (m.map(x => x.length)));
+    for (let j = 0; j < n; ++j) {
+	let max = Number.MIN_SAFE_INTEGER;
+	for (let i = 0; i < m.length; ++i) {
+	    if (j < m[i].length && m[i][j] > max) {
+		max = m[i][j];
+	    }
+	}
+	res.push(max);
+    }
+    return res;
+}
+
+// Example tree showing bug:
+// (((bcd)(efghijkl)) () ((sdfsdf)(dfsdfsfsfss)))
+
+// TODO: figure out why we need to squeeze twice (look in
+// astrenderer.js). The tree won't render the example tree above
+// correctly if squeeze is only called once.
 TreeNode.prototype.squeeze = function() {
     this._children && this._children.forEach(c => c.squeeze());
     if (!this._children || this._children.length < 2 || this._collapsed) {
 	return;
     }
-    let total_d = 0;
-    for (let i = 0; i < this._children.length - 1; ++i) {
-	const rights = this._children[i]._rights().map(x => x + this._children[i]._position.x);
-	const lefts = this._children[i+1]._lefts().map(x => x + this._children[i+1]._position.x);
-	// const rights = this._children[i]._rights();
-	// const lefts = this._children[i+1]._lefts();
-	// console.log('lefts: ' + lefts);
-	// console.log('rights: ' + rights);
+    for (let i = this._children.length - 1; i >= 1; --i) {
+	// Need to look at all neighbors to the right, not just the immediate
+	// one (take the minimum of their lefts at each level).
+	
+	// First index is child, second is "rights" index of that
+	// child. We want to take the max of all "rights" over the
+	// children (collapsing the first axis), with the resulting
+	// "rights" array having length equal to the greatest length
+	// among the children.
+	const all_rights = this._children.slice(0, i)
+	      .map(c => c._rights().map(x => x + c._position.x));
+	const max_rights = max2d(all_rights);
+
+	const min_lefts = this._children[i]._lefts().map(x => x + this._children[i]._position.x);
+	
 	let d = Number.MAX_SAFE_INTEGER;
-	for (let j = 0; j < rights.length && j < lefts.length; ++j) {
-	    d = Math.min(d, lefts[j] - rights[j] - NEIGHBOR_SPACING);
+	for (let j = 0; j < max_rights.length && j < min_lefts.length; ++j) {
+	    d = Math.min(d, min_lefts[j] - max_rights[j] - NEIGHBOR_SPACING);
 	}
 	console.log('d = ' + d);
-	for (let j = 0; j <= i; ++j) {
-	    this._children[j].translate(new Vector(d, 0));
+	if (d != Number.MAX_SAFE_INTEGER) {
+	    this._children[i-1].translate(new Vector(d, 0));
 	}
-	total_d += d;
     }
-    this._computeTreeWidth();
     const ls = this._lefts();
     const rs = this._rights();
     ls.shift();
     rs.shift();
     const l = Math.min.apply(null, ls);
     const r = Math.max.apply(null, rs);
-    // console.log('pos = ' + this._position.x);
-    // console.log('l = ' + l);
-    // console.log('r = ' + r);
     this._children.forEach(c => c.translate(new Vector( this._width / 2 - (l+r)/2, 0)));
 }
 
