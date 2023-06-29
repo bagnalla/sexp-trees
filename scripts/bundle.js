@@ -430,6 +430,9 @@ function init() {
     });
 
     setError();
+
+    editor.setValue("((put) (your) ((s)-(expression)) (here))");
+    setTimeout(parse, 200);
 }
 
 window.addEventListener('resize', function(event){
