@@ -11,6 +11,7 @@ var AstRenderer = function(canvas, editor) {
     this._ctx = canvas.getContext('2d');
     this._puddi = new Puddi(canvas);
     this._puddi.setCentered(true);
+    this._puddi.setStopAfterDraw(true);
     Drawable.call(this, this._puddi, undefined);
     this._canvas = canvas;
     this._editor = editor;
@@ -30,11 +31,13 @@ AstRenderer.prototype.resume = AstRenderer.prototype.run;
 
 AstRenderer.prototype.translate = function(t) {
     this._puddi.translateScaled(t);
+    this._puddi.resume();
 }
 
 AstRenderer.prototype.scale = function(s) {
     this._puddi.scaleTranslated(s);
     this.refresh();
+    this._puddi.resume();
 };
 
 AstRenderer.prototype.refresh = function() {
@@ -131,11 +134,13 @@ AstRenderer.prototype.mousemove = function(pos) {
     		this._editor.session.removeMarker(this._activeNodeMarker);
     		this._activeNode = mousedOver;
     		this._activeNode.setActive(true);
+                this._puddi.resume();
     	    }
     	}
     	else {
     	    this._activeNode = mousedOver;
     	    this._activeNode.setActive(true);
+            this._puddi.resume();
     	}
     }
     else {
@@ -144,8 +149,11 @@ AstRenderer.prototype.mousemove = function(pos) {
     	    this._activeNode = null;
     	    this._editor.session.removeMarker(this._activeNodeMarker);
     	    this._activeNodeMarker = null;
+            this._puddi.resume();
     	}
     }
+
+    // this._puddi.resume();
 };
 
 AstRenderer.prototype.mouseclick = function(pos) {
@@ -166,6 +174,8 @@ AstRenderer.prototype.mouseclick = function(pos) {
 	this._ast.squeeze();
 	this._ast.squeeze();
     }
+
+    this._puddi.resume();
 }
 
 // EXPORT

@@ -17,7 +17,8 @@ var Puddi = function(canvas, fps) {
 	stopCycle: 0,
 	centered: false, // scaling mode
 	fps: fps,
-	time_elapsed: 0
+	time_elapsed: 0,
+        stopAfterDraw: false
     }
 };
 
@@ -70,16 +71,11 @@ Puddi.prototype.run = function() {
     // this object.
     
     // let stopCycle = this._stopCycle;
-    let stop = this._stop;
+    let stop = this.stop;
     let ctx = this._ctx;
-    // let translate = this._translate
-    // let scale = this._scale;
-    // let time = this._time;
-    // let objects = this._objects;
     let state = this._state;
     let cycle = function(tFrame) {
-	// re-register for the next frame
-	state.stopCycle = window.requestAnimationFrame(cycle);
+        console.log(state);
 
 	state.time_elapsed += tFrame - state.time;
 	state.time = tFrame;
@@ -100,6 +96,11 @@ Puddi.prototype.run = function() {
 
 	// reset time_elapsed
 	state.time_elapsed = 0;
+
+        // re-register for the next frame
+        if (!state.stopAfterDraw) {
+	    state.stopCycle = window.requestAnimationFrame(cycle);
+        }
     };
 
     // register the cycle function with the browser update loop
@@ -115,6 +116,10 @@ Puddi.prototype.stop = function() {
 Puddi.prototype.resume = function() {
     // this._stopCycle = window.requestAnimationFrame(this._cycle);
     this.run();
+};
+
+Puddi.prototype.setStopAfterDraw = function(b) {
+    this._state.stopAfterDraw = b;
 };
 
 Puddi.prototype.addObject = function(o) {

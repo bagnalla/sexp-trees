@@ -47,6 +47,7 @@ function parse() {
 	activeRenderer.initScale();
 	activeRenderer.initPositions();
 	activeRenderer.optimize();
+        activeRenderer.run();
     }
     catch (err) {
 	console.log(err);
@@ -257,7 +258,18 @@ function init() {
     setError();
 
     editor.setValue("((put) (your) ((s)-(expression)) (here))");
-    setTimeout(parse, 200);
+    // setTimeout(parse, 200);
+    docReady(parse);
+}
+
+function docReady(fn) {
+    // see if DOM is already available
+    if (document.readyState === "complete" || document.readyState === "interactive") {
+        // call on next available tick
+        setTimeout(fn, 1);
+    } else {
+        document.addEventListener("DOMContentLoaded", fn);
+    }
 }
 
 window.addEventListener('resize', function(event){

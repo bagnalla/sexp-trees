@@ -12,6 +12,7 @@ var AstRenderer = function(canvas, editor) {
     this._ctx = canvas.getContext('2d');
     this._puddi = new Puddi(canvas);
     this._puddi.setCentered(true);
+    this._puddi.setStopAfterDraw(true);
     Drawable.call(this, this._puddi, undefined);
     this._canvas = canvas;
     this._editor = editor;
@@ -31,11 +32,13 @@ AstRenderer.prototype.resume = AstRenderer.prototype.run;
 
 AstRenderer.prototype.translate = function(t) {
     this._puddi.translateScaled(t);
+    this._puddi.resume();
 }
 
 AstRenderer.prototype.scale = function(s) {
     this._puddi.scaleTranslated(s);
     this.refresh();
+    this._puddi.resume();
 };
 
 AstRenderer.prototype.refresh = function() {
@@ -132,11 +135,13 @@ AstRenderer.prototype.mousemove = function(pos) {
     		this._editor.session.removeMarker(this._activeNodeMarker);
     		this._activeNode = mousedOver;
     		this._activeNode.setActive(true);
+                this._puddi.resume();
     	    }
     	}
     	else {
     	    this._activeNode = mousedOver;
     	    this._activeNode.setActive(true);
+            this._puddi.resume();
     	}
     }
     else {
@@ -145,8 +150,11 @@ AstRenderer.prototype.mousemove = function(pos) {
     	    this._activeNode = null;
     	    this._editor.session.removeMarker(this._activeNodeMarker);
     	    this._activeNodeMarker = null;
+            this._puddi.resume();
     	}
     }
+
+    // this._puddi.resume();
 };
 
 AstRenderer.prototype.mouseclick = function(pos) {
@@ -167,6 +175,8 @@ AstRenderer.prototype.mouseclick = function(pos) {
 	this._ast.squeeze();
 	this._ast.squeeze();
     }
+
+    this._puddi.resume();
 }
 
 // EXPORT
@@ -222,6 +232,7 @@ function parse() {
 	activeRenderer.initScale();
 	activeRenderer.initPositions();
 	activeRenderer.optimize();
+        activeRenderer.run();
     }
     catch (err) {
 	console.log(err);
@@ -432,7 +443,18 @@ function init() {
     setError();
 
     editor.setValue("((put) (your) ((s)-(expression)) (here))");
-    setTimeout(parse, 200);
+    // setTimeout(parse, 200);
+    docReady(parse);
+}
+
+function docReady(fn) {
+    // see if DOM is already available
+    if (document.readyState === "complete" || document.readyState === "interactive") {
+        // call on next available tick
+        setTimeout(fn, 1);
+    } else {
+        document.addEventListener("DOMContentLoaded", fn);
+    }
 }
 
 window.addEventListener('resize', function(event){
@@ -1914,7 +1936,8 @@ var Puddi = function(canvas, fps) {
 	stopCycle: 0,
 	centered: false, // scaling mode
 	fps: fps,
-	time_elapsed: 0
+	time_elapsed: 0,
+        stopAfterDraw: false
     }
 };
 
@@ -1967,16 +1990,11 @@ Puddi.prototype.run = function() {
     // this object.
     
     // let stopCycle = this._stopCycle;
-    let stop = this._stop;
+    let stop = this.stop;
     let ctx = this._ctx;
-    // let translate = this._translate
-    // let scale = this._scale;
-    // let time = this._time;
-    // let objects = this._objects;
     let state = this._state;
     let cycle = function(tFrame) {
-	// re-register for the next frame
-	state.stopCycle = window.requestAnimationFrame(cycle);
+        console.log(state);
 
 	state.time_elapsed += tFrame - state.time;
 	state.time = tFrame;
@@ -1997,6 +2015,11 @@ Puddi.prototype.run = function() {
 
 	// reset time_elapsed
 	state.time_elapsed = 0;
+
+        // re-register for the next frame
+        if (!state.stopAfterDraw) {
+	    state.stopCycle = window.requestAnimationFrame(cycle);
+        }
     };
 
     // register the cycle function with the browser update loop
@@ -2012,6 +2035,10 @@ Puddi.prototype.stop = function() {
 Puddi.prototype.resume = function() {
     // this._stopCycle = window.requestAnimationFrame(this._cycle);
     this.run();
+};
+
+Puddi.prototype.setStopAfterDraw = function(b) {
+    this._state.stopAfterDraw = b;
 };
 
 Puddi.prototype.addObject = function(o) {
