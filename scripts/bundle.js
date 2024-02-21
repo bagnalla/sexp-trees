@@ -38,11 +38,11 @@ AstRenderer.prototype.translate = function(t) {
 AstRenderer.prototype.scale = function(s) {
     this._puddi.scaleTranslated(s);
     this.refresh();
-    this._puddi.resume();
 };
 
 AstRenderer.prototype.refresh = function() {
     this._puddi.refresh();
+    this._puddi.resume();
 }
 
 AstRenderer.prototype.initPositions = function() {
