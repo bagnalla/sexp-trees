@@ -16,6 +16,7 @@ var AstRenderer = function(canvas, editor) {
     Drawable.call(this, this._puddi, undefined);
     this._canvas = canvas;
     this._editor = editor;
+    this._theme = "light";
 }
 
 // set up inheritance
@@ -81,6 +82,9 @@ AstRenderer.prototype.addAst = function(ast) {
 	this.removeChild(this._ast);
     }
     this._ast = new TreeNode(this._puddi, this, ast);
+    if (this._ast.setTheme) {
+	this._ast.setTheme(this._theme);
+    }
 }
 
 AstRenderer.prototype.addFlatAst = function(ast) {
@@ -102,6 +106,13 @@ AstRenderer.prototype.optimize = function() {
 AstRenderer.prototype.clear = function() {
     this._ast = null;
     this.clearChildren();
+};
+
+AstRenderer.prototype.setTheme = function(theme) {
+    this._theme = theme === "dark" ? "dark" : "light";
+    if (this._ast && this._ast.setTheme) {
+	this._ast.setTheme(this._theme);
+    }
 };
 
 AstRenderer.prototype.softReset = function() {
@@ -202,6 +213,8 @@ var astRenderer = null; // create in init()
 var activeRenderer = null; // keep track of renderer currently being used
 var isDragging = false;
 var enablePlusMinusScale = true;
+var THEME_STORAGE_KEY = "sexp-trees-theme";
+var currentTheme = "light";
 
 function setError(err) {
     // $("#feedback").text("Error");
@@ -217,6 +230,53 @@ function cancelTimeout() {
 	clearTimeout(timeoutId);
 	timeoutId = null;
     }
+}
+
+function normalizeTheme(theme) {
+    if (theme === "dark") {
+	return "dark";
+    }
+    return "light";
+}
+
+function loadStoredTheme() {
+    try {
+	return normalizeTheme(localStorage.getItem(THEME_STORAGE_KEY));
+    }
+    catch (err) {
+	return "light";
+    }
+}
+
+function persistTheme(theme) {
+    try {
+	localStorage.setItem(THEME_STORAGE_KEY, theme);
+    }
+    catch (err) {
+	console.log(err);
+    }
+}
+
+function updateThemeToggle(theme) {
+    const darkMode = theme === "dark";
+    $("#themeToggle").text(darkMode ? "Light mode" : "Dark mode");
+    $("#themeToggle").attr("aria-pressed", darkMode ? "true" : "false");
+}
+
+function applyTheme(theme, editor) {
+    currentTheme = normalizeTheme(theme);
+    document.body.classList.toggle("dark-mode", currentTheme === "dark");
+    if (editor) {
+	editor.setTheme(currentTheme === "dark"
+			? "ace/theme/tomorrow_night_blue"
+			: "ace/theme/chrome");
+    }
+    if (activeRenderer && activeRenderer.setTheme) {
+	activeRenderer.setTheme(currentTheme);
+	activeRenderer.refresh();
+    }
+    updateThemeToggle(currentTheme);
+    persistTheme(currentTheme);
 }
 
 // parse sexp and load tree
@@ -357,6 +417,7 @@ function handleMouseWheel(e) {
 // set up editors, canvases, and renderers
 function init() {
     let editor = ace.edit("editor");
+    currentTheme = loadStoredTheme();
     editor.setTheme("ace/theme/chrome");
     editor.session.setMode("ace/mode/javascript");
     editor.session.setUseWorker(false);
@@ -435,6 +496,16 @@ function init() {
 
     astRenderer.resume();
     activeRenderer = astRenderer;
+    applyTheme(currentTheme, editor);
+
+    $("#themeToggle").click(function() {
+	if (currentTheme === "dark") {
+	    applyTheme("light", editor);
+	}
+	else {
+	    applyTheme("dark", editor);
+	}
+    });
 
     $(window).mouseup(function(){
 	isDragging = false;
@@ -2285,6 +2356,28 @@ var MIN_NODE_HEIGHT = 25;
 var LINK_CONNECTOR_SIZE = 5;
 var NEIGHBOR_SPACING = 7;
 var CHILD_SPACING = MIN_NODE_HEIGHT * 1.5;
+var TREE_PALETTES = {
+    light: {
+	nodeFill: "#ffffff",
+	nodeBorder: "#111827",
+	text: "#111827",
+	activeFill: "rgba(100, 200, 100, 0.4)",
+	activeLinkStroke: "rgba(255, 0, 0, 0.25)",
+	linkStroke: "rgba(0, 0, 0, 0.25)",
+	connector: "#111827",
+	collapsedFill: "rgba(0, 0, 0, 0.25)"
+    },
+    dark: {
+	nodeFill: "#1f2937",
+	nodeBorder: "#d1d5db",
+	text: "#e5e7eb",
+	activeFill: "rgba(52, 211, 153, 0.28)",
+	activeLinkStroke: "rgba(248, 113, 113, 0.4)",
+	linkStroke: "rgba(229, 231, 235, 0.35)",
+	connector: "#e5e7eb",
+	collapsedFill: "rgba(17, 24, 39, 0.45)"
+    }
+};
 
 // The first value is the array of position information values.
 // The rest are either atoms (strings) or nodes (arrays)
@@ -2300,6 +2393,8 @@ var TreeNode = function(puddi, parent, values) {
     this._active = false;
     this._collapsed = false;
     this._hidden = false;
+    this._theme = "light";
+    this._palette = TREE_PALETTES.light;
 }
 
 // set up inheritance
@@ -2527,6 +2622,16 @@ TreeNode.prototype.initPositions = function() {
 TreeNode.prototype.getWidth = function() { return this._width; };
 TreeNode.prototype.getHeight = function() { return this._height; };
 
+TreeNode.prototype.setTheme = function(theme) {
+    this._theme = theme === "dark" ? "dark" : "light";
+    this._palette = TREE_PALETTES[this._theme];
+    for (let c of this._children) {
+	if (c.setTheme) {
+	    c.setTheme(this._theme);
+	}
+    }
+};
+
 TreeNode.prototype.setActive = function(a) {
     this._active = a;
     for (let c of this._children) {
@@ -2583,14 +2688,16 @@ TreeNode.prototype._drawSelf = function(ctx) {
     if (this._hidden) { return; }
     ctx.lineWidth = 2;
     let textHeight = 10;// get font size from ctx
-    ctx.fillStyle = "white";
+    const palette = this._palette || TREE_PALETTES.light;
+    ctx.fillStyle = palette.nodeFill;
+    ctx.strokeStyle = palette.nodeBorder;
     ctx.fillRect(0, -this._height / 2, this._width, this._height);
     ctx.strokeRect(0, -this._height / 2, this._width, this._height);
     if (this._active) {
-    	ctx.fillStyle = "rgba(100,200,100,0.4)";
+    	ctx.fillStyle = palette.activeFill;
     	ctx.fillRect(0, -this._height / 2, this._width, this._height);
     }
-    ctx.fillStyle = "black";
+    ctx.fillStyle = palette.text;
 
     let offset_x = this._width / 2 - this._textWidth / 2;
     for (let x of this._body) {
@@ -2598,10 +2705,10 @@ TreeNode.prototype._drawSelf = function(ctx) {
 	    if (!this._collapsed) {
 		// draw line to child
 		if (this._active) {
-		    ctx.strokeStyle = "rgba(255, 0, 0, 0.25)";
+		    ctx.strokeStyle = palette.activeLinkStroke;
 		}
 		else {
-		    ctx.strokeStyle = "rgba(0, 0, 0, 0.25)";
+		    ctx.strokeStyle = palette.linkStroke;
 		}
 		let childPos = this._children[x].getPosition();
 		let childWidth = this._children[x].getWidth();
@@ -2618,7 +2725,7 @@ TreeNode.prototype._drawSelf = function(ctx) {
 		// else {
 		// 	ctx.fillStyle = "darkgreen";
 		// }
-		ctx.fillStyle = "black";
+		ctx.fillStyle = palette.connector;
 
 		// draw link to child indexed by x
 		// ctx.fillRect(offset_x, -LINK_CONNECTOR_SIZE / 4,
@@ -2634,7 +2741,7 @@ TreeNode.prototype._drawSelf = function(ctx) {
 		ctx.fill();
 	    }
 	    else {
-		ctx.fillStyle = "black";	
+		ctx.strokeStyle = palette.connector;
 		ctx.beginPath();
 		ctx.moveTo(offset_x, LINK_CONNECTOR_SIZE / 4);
 		ctx.lineTo(offset_x + LINK_CONNECTOR_SIZE, LINK_CONNECTOR_SIZE / 4);
@@ -2644,7 +2751,7 @@ TreeNode.prototype._drawSelf = function(ctx) {
 	    offset_x += LINK_CONNECTOR_SIZE + this._text_spacing;
 	}
 	else {
-	    ctx.fillStyle = "black";
+	    ctx.fillStyle = palette.text;
 	    // draw atom string
 	    ctx.fillText(x, offset_x, textHeight / 2.5);
 	    offset_x += this._puddi.getCtx().measureText(x).width +
@@ -2652,7 +2759,7 @@ TreeNode.prototype._drawSelf = function(ctx) {
 	}
     }
     if (this._collapsed) {
-	ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+	ctx.fillStyle = palette.collapsedFill;
 	ctx.fillRect(0, -this._height / 2, this._width, this._height);
     } 
 };

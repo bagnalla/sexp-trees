@@ -1,3 +1,27 @@
+/* Theme tokens */
+:root {
+    --bg-color: #ffffff;
+    --text-color: #111827;
+    --panel-bg-color: #ffffff;
+    --border-color: #d1d5db;
+    --button-bg-color: #f3f4f6;
+    --button-text-color: #111827;
+}
+
+body.dark-mode {
+    --bg-color: #111827;
+    --text-color: #e5e7eb;
+    --panel-bg-color: #1f2937;
+    --border-color: #4b5563;
+    --button-bg-color: #374151;
+    --button-text-color: #e5e7eb;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
 /* #outertable { */
 /*     width: 90%; */
 /*     /\* margin: auto; *\/ */
@@ -23,7 +47,7 @@
     /* position: absolute; */
     /* margin: auto; */
     top: 0;
-    border: 1px solid lightgray;
+    border: 1px solid var(--border-color);
     margin-top: 0px;
     height: 420px;
     width: 545px;
@@ -33,6 +57,8 @@
     margin-bottom: 0px;
     padding-bottom: 0px;
     border-bottom: groove;
+    border-bottom-color: var(--border-color);
+    background-color: var(--panel-bg-color);
 }
 
 #tabs {
@@ -43,10 +69,11 @@
     position: relative !important;
     /* position: absolute; */
     top: 0;
-    border: 1px solid lightgray;
+    border: 1px solid var(--border-color);
     /* height: 100%; */
     /* width: 100%; */
     width: 545px;
+    background-color: var(--panel-bg-color);
 }
 
 .fullwidth {
@@ -55,8 +82,42 @@
     margin-right: auto;
 }
 
+#headerrow {
+    position: relative;
+}
+
 h2 {
     text-align: center;
+}
+
+#headerrow h2 {
+    margin-top: 12px;
+    margin-bottom: 12px;
+}
+
+#themeToggle {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 1px solid var(--border-color);
+    background-color: var(--button-bg-color);
+    color: var(--button-text-color);
+}
+
+#themeToggle:hover,
+#themeToggle:focus {
+    background-color: var(--border-color);
+    color: var(--button-text-color);
+}
+
+@media (max-width: 767px) {
+    #themeToggle {
+	position: static;
+	transform: none;
+	display: block;
+	margin: 0 auto 10px auto;
+    }
 }
 
 .ui-state-active {
@@ -69,6 +130,7 @@ h2 {
     width: 100%;
     text-align: left;
     margin: auto;
+    color: var(--text-color);
 }
 
 #undereditor {
@@ -82,6 +144,7 @@ h2 {
     font-size: 12px;
     display: inline;
     width: 100%;
+    color: var(--text-color);
 }
 
 .myButton {
@@ -103,12 +166,16 @@ h2 {
 table {
     border: ridge;
     border-width: 1px;
+    border-color: var(--border-color);
+    background-color: var(--panel-bg-color);
 }
 
 td {
     vertical-align: top;
     border: groove;
     border-width: 1px;
+    border-color: var(--border-color);
+    color: var(--text-color);
 }
 
 footer {
@@ -135,4 +202,10 @@ footer {
 #tokenstab, #asttab {
     padding-left: 5px;
     padding-top: 0px;
+}
+
+body.dark-mode .btn {
+    border-color: var(--border-color);
+    background-color: var(--button-bg-color);
+    color: var(--button-text-color);
 }

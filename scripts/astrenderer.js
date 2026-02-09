@@ -15,6 +15,7 @@ var AstRenderer = function(canvas, editor) {
     Drawable.call(this, this._puddi, undefined);
     this._canvas = canvas;
     this._editor = editor;
+    this._theme = "light";
 }
 
 // set up inheritance
@@ -80,6 +81,9 @@ AstRenderer.prototype.addAst = function(ast) {
 	this.removeChild(this._ast);
     }
     this._ast = new TreeNode(this._puddi, this, ast);
+    if (this._ast.setTheme) {
+	this._ast.setTheme(this._theme);
+    }
 }
 
 AstRenderer.prototype.addFlatAst = function(ast) {
@@ -101,6 +105,13 @@ AstRenderer.prototype.optimize = function() {
 AstRenderer.prototype.clear = function() {
     this._ast = null;
     this.clearChildren();
+};
+
+AstRenderer.prototype.setTheme = function(theme) {
+    this._theme = theme === "dark" ? "dark" : "light";
+    if (this._ast && this._ast.setTheme) {
+	this._ast.setTheme(this._theme);
+    }
 };
 
 AstRenderer.prototype.softReset = function() {
