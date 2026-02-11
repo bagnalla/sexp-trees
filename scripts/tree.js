@@ -13,6 +13,28 @@ var MIN_NODE_HEIGHT = 25;
 var LINK_CONNECTOR_SIZE = 5;
 var NEIGHBOR_SPACING = 7;
 var CHILD_SPACING = MIN_NODE_HEIGHT * 1.5;
+var TREE_PALETTES = {
+    light: {
+	nodeFill: "#ffffff",
+	nodeBorder: "#111827",
+	text: "#111827",
+	activeFill: "rgba(100, 200, 100, 0.4)",
+	activeLinkStroke: "rgba(255, 0, 0, 0.25)",
+	linkStroke: "rgba(0, 0, 0, 0.25)",
+	connector: "#111827",
+	collapsedFill: "rgba(0, 0, 0, 0.25)"
+    },
+    dark: {
+	nodeFill: "#1f2937",
+	nodeBorder: "#d1d5db",
+	text: "#e5e7eb",
+	activeFill: "rgba(52, 211, 153, 0.28)",
+	activeLinkStroke: "rgba(248, 113, 113, 0.4)",
+	linkStroke: "rgba(229, 231, 235, 0.35)",
+	connector: "#e5e7eb",
+	collapsedFill: "rgba(17, 24, 39, 0.45)"
+    }
+};
 
 // The first value is the array of position information values.
 // The rest are either atoms (strings) or nodes (arrays)
@@ -28,6 +50,8 @@ var TreeNode = function(puddi, parent, values) {
     this._active = false;
     this._collapsed = false;
     this._hidden = false;
+    this._theme = "light";
+    this._palette = TREE_PALETTES.light;
 }
 
 // set up inheritance
@@ -255,6 +279,16 @@ TreeNode.prototype.initPositions = function() {
 TreeNode.prototype.getWidth = function() { return this._width; };
 TreeNode.prototype.getHeight = function() { return this._height; };
 
+TreeNode.prototype.setTheme = function(theme) {
+    this._theme = theme === "dark" ? "dark" : "light";
+    this._palette = TREE_PALETTES[this._theme];
+    for (let c of this._children) {
+	if (c.setTheme) {
+	    c.setTheme(this._theme);
+	}
+    }
+};
+
 TreeNode.prototype.setActive = function(a) {
     this._active = a;
     for (let c of this._children) {
@@ -311,14 +345,16 @@ TreeNode.prototype._drawSelf = function(ctx) {
     if (this._hidden) { return; }
     ctx.lineWidth = 2;
     let textHeight = 10;// get font size from ctx
-    ctx.fillStyle = "white";
+    const palette = this._palette || TREE_PALETTES.light;
+    ctx.fillStyle = palette.nodeFill;
+    ctx.strokeStyle = palette.nodeBorder;
     ctx.fillRect(0, -this._height / 2, this._width, this._height);
     ctx.strokeRect(0, -this._height / 2, this._width, this._height);
     if (this._active) {
-    	ctx.fillStyle = "rgba(100,200,100,0.4)";
+    	ctx.fillStyle = palette.activeFill;
     	ctx.fillRect(0, -this._height / 2, this._width, this._height);
     }
-    ctx.fillStyle = "black";
+    ctx.fillStyle = palette.text;
 
     let offset_x = this._width / 2 - this._textWidth / 2;
     for (let x of this._body) {
@@ -326,10 +362,10 @@ TreeNode.prototype._drawSelf = function(ctx) {
 	    if (!this._collapsed) {
 		// draw line to child
 		if (this._active) {
-		    ctx.strokeStyle = "rgba(255, 0, 0, 0.25)";
+		    ctx.strokeStyle = palette.activeLinkStroke;
 		}
 		else {
-		    ctx.strokeStyle = "rgba(0, 0, 0, 0.25)";
+		    ctx.strokeStyle = palette.linkStroke;
 		}
 		let childPos = this._children[x].getPosition();
 		let childWidth = this._children[x].getWidth();
@@ -346,7 +382,7 @@ TreeNode.prototype._drawSelf = function(ctx) {
 		// else {
 		// 	ctx.fillStyle = "darkgreen";
 		// }
-		ctx.fillStyle = "black";
+		ctx.fillStyle = palette.connector;
 
 		// draw link to child indexed by x
 		// ctx.fillRect(offset_x, -LINK_CONNECTOR_SIZE / 4,
@@ -362,7 +398,7 @@ TreeNode.prototype._drawSelf = function(ctx) {
 		ctx.fill();
 	    }
 	    else {
-		ctx.fillStyle = "black";	
+		ctx.strokeStyle = palette.connector;
 		ctx.beginPath();
 		ctx.moveTo(offset_x, LINK_CONNECTOR_SIZE / 4);
 		ctx.lineTo(offset_x + LINK_CONNECTOR_SIZE, LINK_CONNECTOR_SIZE / 4);
@@ -372,7 +408,7 @@ TreeNode.prototype._drawSelf = function(ctx) {
 	    offset_x += LINK_CONNECTOR_SIZE + this._text_spacing;
 	}
 	else {
-	    ctx.fillStyle = "black";
+	    ctx.fillStyle = palette.text;
 	    // draw atom string
 	    ctx.fillText(x, offset_x, textHeight / 2.5);
 	    offset_x += this._puddi.getCtx().measureText(x).width +
@@ -380,7 +416,7 @@ TreeNode.prototype._drawSelf = function(ctx) {
 	}
     }
     if (this._collapsed) {
-	ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+	ctx.fillStyle = palette.collapsedFill;
 	ctx.fillRect(0, -this._height / 2, this._width, this._height);
     } 
 };

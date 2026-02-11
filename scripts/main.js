@@ -17,6 +17,8 @@ var astRenderer = null; // create in init()
 var activeRenderer = null; // keep track of renderer currently being used
 var isDragging = false;
 var enablePlusMinusScale = true;
+var THEME_STORAGE_KEY = "sexp-trees-theme";
+var currentTheme = "light";
 
 function setError(err) {
     // $("#feedback").text("Error");
@@ -32,6 +34,57 @@ function cancelTimeout() {
 	clearTimeout(timeoutId);
 	timeoutId = null;
     }
+}
+
+function normalizeTheme(theme) {
+    if (theme === "dark") {
+	return "dark";
+    }
+    return "light";
+}
+
+function loadStoredTheme() {
+    try {
+	return normalizeTheme(localStorage.getItem(THEME_STORAGE_KEY));
+    }
+    catch (err) {
+	return "light";
+    }
+}
+
+function persistTheme(theme) {
+    try {
+	localStorage.setItem(THEME_STORAGE_KEY, theme);
+    }
+    catch (err) {
+	console.log(err);
+    }
+}
+
+function updateThemeToggle(theme) {
+    const darkMode = theme === "dark";
+    const actionLabel = darkMode ? "Switch to light mode" : "Switch to dark mode";
+    const stateLabel = darkMode ? "Dark" : "Light";
+    $("#themeStateLabel").text(stateLabel);
+    $("#themeToggle").attr("aria-label", actionLabel);
+    $("#themeToggle").attr("title", actionLabel);
+    $("#themeToggle").attr("aria-checked", darkMode ? "true" : "false");
+}
+
+function applyTheme(theme, editor) {
+    currentTheme = normalizeTheme(theme);
+    document.body.classList.toggle("dark-mode", currentTheme === "dark");
+    if (editor) {
+	editor.setTheme(currentTheme === "dark"
+			? "ace/theme/tomorrow_night_blue"
+			: "ace/theme/chrome");
+    }
+    if (activeRenderer && activeRenderer.setTheme) {
+	activeRenderer.setTheme(currentTheme);
+	activeRenderer.refresh();
+    }
+    updateThemeToggle(currentTheme);
+    persistTheme(currentTheme);
 }
 
 // parse sexp and load tree
@@ -172,6 +225,7 @@ function handleMouseWheel(e) {
 // set up editors, canvases, and renderers
 function init() {
     let editor = ace.edit("editor");
+    currentTheme = loadStoredTheme();
     editor.setTheme("ace/theme/chrome");
     editor.session.setMode("ace/mode/javascript");
     editor.session.setUseWorker(false);
@@ -250,6 +304,16 @@ function init() {
 
     astRenderer.resume();
     activeRenderer = astRenderer;
+    applyTheme(currentTheme, editor);
+
+    $("#themeToggle").click(function() {
+	if (currentTheme === "dark") {
+	    applyTheme("light", editor);
+	}
+	else {
+	    applyTheme("dark", editor);
+	}
+    });
 
     $(window).mouseup(function(){
 	isDragging = false;
