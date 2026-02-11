@@ -21,8 +21,16 @@
     <div id="content" class="container">
       <div id="headerrow">
 	<h2>View s-expressions as trees.</h2>
-	<button type="button" id="themeToggle" class="btn btn-xs"
-		aria-pressed="false">Dark mode</button>
+	<div id="themeControl">
+	  <button type="button" id="themeToggle" role="switch"
+		  aria-checked="false" aria-label="Switch to dark mode"
+		  title="Switch to dark mode">
+	    <span class="theme-switch-track" aria-hidden="true">
+	      <span class="theme-switch-thumb"></span>
+	    </span>
+	  </button>
+	  <span id="themeStateLabel" aria-live="polite">Light</span>
+	</div>
       </div>
 
       <div align="center">

@@ -259,8 +259,12 @@ function persistTheme(theme) {
 
 function updateThemeToggle(theme) {
     const darkMode = theme === "dark";
-    $("#themeToggle").text(darkMode ? "Light mode" : "Dark mode");
-    $("#themeToggle").attr("aria-pressed", darkMode ? "true" : "false");
+    const actionLabel = darkMode ? "Switch to light mode" : "Switch to dark mode";
+    const stateLabel = darkMode ? "Dark" : "Light";
+    $("#themeStateLabel").text(stateLabel);
+    $("#themeToggle").attr("aria-label", actionLabel);
+    $("#themeToggle").attr("title", actionLabel);
+    $("#themeToggle").attr("aria-checked", darkMode ? "true" : "false");
 }
 
 function applyTheme(theme, editor) {
