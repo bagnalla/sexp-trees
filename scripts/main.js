@@ -76,7 +76,7 @@ function applyTheme(theme, editor) {
     document.body.classList.toggle("dark-mode", currentTheme === "dark");
     if (editor) {
 	editor.setTheme(currentTheme === "dark"
-			? "ace/theme/tomorrow_night_blue"
+			? "ace/theme/twilight"
 			: "ace/theme/chrome");
     }
     if (activeRenderer && activeRenderer.setTheme) {
